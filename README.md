@@ -109,7 +109,7 @@ ADS(10 张表)
 ![日GMV趋势](output/visual/01_gmv_daily_trend.png)
 ![区域销售排行](output/visual/03_region_sales_rank.png)
 ![支付方式占比](output/visual/06_payment_dist.png)
-![09_region_sales_month](output\visual\09_region_sales_month.png)
+![09_region_sales_month](output/visual/09_region_sales_month.png)
 
 ## 五、踩坑与解决方案
 
