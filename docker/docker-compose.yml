@@ -1,0 +1,129 @@
+services:
+  namenode:
+    image: ${HADOOP_NAMENODE_IMAGE:-bde2020/hadoop-namenode}:${HADOOP_IMAGE_TAG:-2.0.0-hadoop3.2.1-java8}
+    container_name: dw_namenode
+    environment:
+      - CLUSTER_NAME=dwcluster
+      - CORE_CONF_fs_defaultFS=hdfs://namenode:9000
+    ports:
+      - "${HDFS_WEB_PORT:-9870}:9870"
+      - "${HDFS_RPC_PORT:-9000}:9000"
+    volumes:
+      - namenode_data:/hadoop/dfs/name
+    hostname: namenode
+    networks:
+      - dwnet
+
+  datanode:
+    image: ${HADOOP_DATANODE_IMAGE:-bde2020/hadoop-datanode}:${HADOOP_IMAGE_TAG:-2.0.0-hadoop3.2.1-java8}
+    container_name: dw_datanode
+    environment:
+      - CORE_CONF_fs_defaultFS=hdfs://namenode:9000
+      - SERVICE_PRECONDITION=namenode:9870
+    depends_on:
+      - namenode
+    ports:
+      - "${HDFS_DATANODE_PORT:-9864}:9864"
+    volumes:
+      - datanode_data:/hadoop/dfs/data
+    hostname: datanode
+    networks:
+      - dwnet
+
+  postgres:
+    image: postgres:14
+    container_name: dw_postgres
+    environment:
+      - POSTGRES_DB=metastore
+      - POSTGRES_USER=hive
+      - POSTGRES_PASSWORD=hive
+      - POSTGRES_INITDB_ARGS=--auth-host=md5 --auth-local=md5
+    command: ["postgres", "-c", "password_encryption=md5"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hive -d metastore"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    hostname: postgres
+    networks:
+      - dwnet
+
+  hive-metastore:
+    image: apache/hive:3.1.3
+    container_name: hivemetastore
+    hostname: hivemetastore
+    restart: unless-stopped
+    environment:
+      - SERVICE_NAME=metastore
+      - DB_DRIVER=postgres
+      - SERVICE_OPTS=-Djavax.jdo.option.ConnectionURL=jdbc:postgresql://postgres:5432/metastore -Djavax.jdo.option.ConnectionDriverName=org.postgresql.Driver -Djavax.jdo.option.ConnectionUserName=hive -Djavax.jdo.option.ConnectionPassword=hive -Dhive.metastore.thrift.bind.host=0.0.0.0
+      - IS_RESUME=true
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "9083:9083"
+    networks:
+      dwnet:
+        aliases:
+          - hive-metastore
+          - hivemetastore
+
+  hive-server:
+    image: apache/hive:3.1.3
+    container_name: dw_hive_server
+    hostname: hiveserver
+    restart: unless-stopped
+    environment:
+      - SERVICE_NAME=hiveserver2
+      - SERVICE_OPTS=-Dhive.metastore.uris=thrift://hivemetastore:9083
+      - IS_RESUME=true
+    depends_on:
+      hive-metastore:
+        condition: service_started
+    ports:
+      - "10000:10000"
+      - "10002:10002"
+    networks:
+      dwnet:
+        aliases:
+          - hive-server
+          - hiveserver
+
+  spark:
+    image: ${SPARK_IMAGE:-apache/spark}:${SPARK_TAG:-3.5.1-scala2.12-java11-python3-ubuntu}
+    container_name: dw_spark
+    command:
+      - /opt/spark/bin/spark-class
+      - org.apache.spark.deploy.master.Master
+      - --host
+      - spark
+      - --port
+      - "7077"
+      - --webui-port
+      - "8080"
+    hostname: spark
+    environment:
+      - SPARK_NO_DAEMONIZE=true
+    ports:
+      - "${SPARK_WEBUI_PORT:-8080}:8080"
+      - "${SPARK_MASTER_PORT:-7077}:7077"
+      - "${SPARK_LOCAL_UI_PORT:-4040}:4040"
+    depends_on:
+      - hive-server
+      - namenode
+    networks:
+      - dwnet
+
+volumes:
+  namenode_data:
+  datanode_data:
+  postgres_data:
+
+networks:
+  dwnet:
+    name: dwnet
