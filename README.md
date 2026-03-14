@@ -1,4 +1,4 @@
-# 电商离线数仓与经营分析看板 · 作品集
+# 电商离线数仓与经营分析看板
 
 ---
 
@@ -106,13 +106,10 @@ ADS(10 张表)
 
 ### 图表预览
 
-![日GMV趋势](../output/visual/01_gmv_daily_trend.png)
-![区域销售排行](../output/visual/03_region_sales_rank.png)
-![支付方式占比](../output/visual/06_payment_dist.png)
-
----
-
-![09_region_sales_month](D:\HeJiaqian\job_analysis\data_dev_internship_project\output\visual\09_region_sales_month.png)
+![日GMV趋势](output/visual/01_gmv_daily_trend.png)
+![区域销售排行](output/visual/03_region_sales_rank.png)
+![支付方式占比](output/visual/06_payment_dist.png)
+![09_region_sales_month](output\visual\09_region_sales_month.png)
 
 ## 五、踩坑与解决方案
 
