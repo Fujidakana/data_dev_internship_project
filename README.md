@@ -10,7 +10,6 @@
 
 - **数据源**：Olist 电商公开数据集（订单、明细、支付、客户、商品等）[Brazilian E-Commerce Public Dataset by Olist](https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce)
 - **目标**：搭建 ODS/DWD/DWS/ADS 分层数仓，产出经营分析看板，支撑业务解读
-- **周期**：5天，涵盖环境搭建、数据建模、指标开发、可视化及文档
 
 ### 技术栈
 
@@ -60,19 +59,19 @@ ADS(10 张表)
 
 ## 三、执行流程与关键产出
 
-### Day1–Day2：环境与 ODS
+### 环境部署与ODS层构建
 
 - Docker 部署 NameNode/DataNode/Postgres/Hive/Spark
 - HDFS、Hive、Spark 最小验证
 - Olist 数据探索与 ODS 外部表（9 张）落地
 
-### Day3：DWD 层
+### DWD层构建
 
 - 设计 `dwd_trade_detail` 宽表
 - **关键处理**：order_payments 一单多笔，先按 order_id 聚合再 JOIN，避免明细倍增
 - 质量校验：主键唯一、空值、金额、关联、支付覆盖率
 
-### Day4：DWS 层
+### DWS层构建与性能对比
 
 - 从 ADS 目标反推主题粒度
 - 6 张 DWS 表建表与 INSERT
@@ -82,7 +81,7 @@ ADS(10 张表)
 - `spark_ads_job.py` 批量导出 CSV
 - **性能对比**：小表场景 Hive 更快（~1.2s），Spark 有 JVM 冷启动（~4–5s）
 
-### Day5：可视化
+### 可视化分析
 
 - `ads_visualization.ipynb` 绘制 10 张经营分析图
 - 每图附带分析、结论、未来建议，形成经营分析闭环
